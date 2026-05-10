@@ -1,3 +1,53 @@
+import { MovementActionScripts as MAScripts } from "./movementActionScripts.js";
+
+const timeoutAction = (
+  interval,
+  numberOfIterations,
+  iterationFunction,
+  endFunction,
+) => {
+  let iteration = 0;
+  const actionInterval = setInterval(() => {
+    iteration += 1;
+    iterationFunction && iterationFunction(iteration);
+    if (iteration >= numberOfIterations) {
+      endFunction && endFunction();
+      clearInterval(actionInterval);
+    }
+  }, interval);
+};
+const timeoutFrameControl = (
+  timeout,
+  frames,
+  character,
+  frameFunction,
+  actionFrame,
+  actionFunction,
+  reverse,
+  endFunction,
+) => {
+  character.currentFrame = 1;
+  character.framesElapsed = 0;
+  if (reverse) {
+    frames = [...frames, ...frames.slice(0, frames.length - 1).reverse()];
+  }
+  frames.forEach((frame, i) => {
+    setTimeout(
+      () => {
+        character.currentFrame = frame;
+        frameFunction && frameFunction();
+        if (i + 1 === actionFrame) {
+          actionFunction && actionFunction();
+        }
+        if (i + 1 === frames.length) {
+          endFunction && endFunction();
+        }
+      },
+      timeout * (i + 1),
+    );
+  });
+};
+
 export class Character {
   constructor({
     id,
@@ -141,26 +191,26 @@ export class Character {
           this.position.x += randomXDirectionOffset;
         }
         if (direction === "topRight") {
-          this.position.x += pushPower * diagonalFactor;
-          this.position.y -= pushPower * diagonalFactor;
+          this.position.x += pushPower * MAScripts.getDiagonalFactor();
+          this.position.y -= pushPower * MAScripts.getDiagonalFactor();
           this.position.x += randomXDirectionOffset;
           this.position.y += randomYDirectionOffset;
         }
         if (direction === "topLeft") {
-          this.position.x -= pushPower * diagonalFactor;
-          this.position.y -= pushPower * diagonalFactor;
+          this.position.x -= pushPower * MAScripts.getDiagonalFactor();
+          this.position.y -= pushPower * MAScripts.getDiagonalFactor();
           this.position.x += randomXDirectionOffset;
           this.position.y += randomYDirectionOffset;
         }
         if (direction === "bottomRight") {
-          this.position.y += pushPower * diagonalFactor;
-          this.position.x += pushPower * diagonalFactor;
+          this.position.y += pushPower * MAScripts.getDiagonalFactor();
+          this.position.x += pushPower * MAScripts.getDiagonalFactor();
           this.position.x += randomXDirectionOffset;
           this.position.y += randomYDirectionOffset;
         }
         if (direction === "bottomLeft") {
-          this.position.y += pushPower * diagonalFactor;
-          this.position.x -= pushPower * diagonalFactor;
+          this.position.y += pushPower * MAScripts.getDiagonalFactor();
+          this.position.x -= pushPower * MAScripts.getDiagonalFactor();
           this.position.x += randomXDirectionOffset;
           this.position.y += randomYDirectionOffset;
         }
@@ -170,7 +220,7 @@ export class Character {
         this.punchBoxPosition.y = this.getPunchBoxPosition().y;
         this.pushingBoxPosition.x = this.getPushingBoxPosition().x;
         this.pushingBoxPosition.y = this.getPushingBoxPosition().y;
-        io.emit("gameActions", allPlayers);
+        global.io.emit("gameActions", global.allPlayers);
         pushPower -= 1;
         if (randomXDirectionOffset > 0) {
           randomXDirectionOffset -= Math.abs(randomXDirectionOffset) / power;
@@ -220,13 +270,13 @@ export class Character {
             }
           }
         }
-        io.emit("gameActions", allPlayers);
+        global.io.emit("gameActions", global.allPlayers);
       },
       () => {
         this.offset.y = 0;
         this.isJumping = 0;
         this.currentFrame = 1;
-        io.emit("gameActions", allPlayers);
+        global.io.emit("gameActions", global.allPlayers);
       },
     );
   };
@@ -241,14 +291,14 @@ export class Character {
       punchFrames,
       this,
       () => {
-        io.emit("gameActions", allPlayers);
+        global.io.emit("gameActions", global.allPlayers);
       },
       4,
       () => {
-        allPlayers.forEach((hurtChamp) => {
+        global.allPlayers.forEach((hurtChamp) => {
           if (
             hurtChamp.id !== this.id &&
-            doesCollideRect(
+            MAScripts.doesCollideRect(
               hurtChamp.getCurrentHurtBox(),
               this.getCurrentPunchBox(),
               hurtChamp.offset.y,
@@ -262,7 +312,7 @@ export class Character {
             }
             hurtChamp.currentHP = hurtChampHP;
             hurtChamp.pushMe(this.lastDirection, 3);
-            io.emit("gameActions", allPlayers);
+            global.io.emit("gameActions", global.allPlayers);
           }
         });
       },
@@ -270,7 +320,7 @@ export class Character {
       () => {
         this.isAttacking = false;
         this.isPunching1 = false;
-        io.emit("gameActions", allPlayers);
+        global.io.emit("gameActions", global.allPlayers);
       },
     );
   };

@@ -4,81 +4,12 @@ const http = require("http").createServer();
 const io = require("socket.io")(http, {
   cors: { origin: "*" },
 });
+const MAScripts = require("./movementActionScripts.js").MovementActionScripts;
 //-----
 
 const allPlayers = [];
-const diagonalFactor = 0.70710678118;
-
-const getOppositeDirection = (direction) => {
-  if (direction === "left") return "right";
-  if (direction === "right") return "left";
-  if (direction === "top") return "bottom";
-  if (direction === "bottom") return "top";
-  if (direction === "topLeft") return "bottomRight";
-  if (direction === "topRight") return "bottomLeft";
-  if (direction === "bottomLeft") return "topRight";
-  if (direction === "bottomRight") return "topLeft";
-};
-
-const doesCollideRect = (a, b, aJumpOffset, bJumpOffset) => {
-  let isCollision = !(
-    a.y + a.height < b.y ||
-    a.y > b.y + b.height ||
-    a.x + a.width < b.x ||
-    a.x > b.x + b.width
-  );
-  const areRectsOnSimilarHeight = Math.abs(aJumpOffset - bJumpOffset) <= 10;
-  // TODO ^ change <= 10 to a number related with rect height
-  return isCollision && areRectsOnSimilarHeight;
-};
-
-const timeoutFrameControl = (
-  timeout,
-  frames,
-  character,
-  frameFunction,
-  actionFrame,
-  actionFunction,
-  reverse,
-  endFunction,
-) => {
-  character.currentFrame = 1;
-  character.framesElapsed = 0;
-  if (reverse) {
-    frames = [...frames, ...frames.slice(0, frames.length - 1).reverse()];
-  }
-  frames.forEach((frame, i) => {
-    setTimeout(
-      () => {
-        character.currentFrame = frame;
-        frameFunction && frameFunction();
-        if (i + 1 === actionFrame) {
-          actionFunction && actionFunction();
-        }
-        if (i + 1 === frames.length) {
-          endFunction && endFunction();
-        }
-      },
-      timeout * (i + 1),
-    );
-  });
-};
-const timeoutAction = (
-  interval,
-  numberOfIterations,
-  iterationFunction,
-  endFunction,
-) => {
-  let iteration = 0;
-  const actionInterval = setInterval(() => {
-    iteration += 1;
-    iterationFunction && iterationFunction(iteration);
-    if (iteration >= numberOfIterations) {
-      endFunction && endFunction();
-      clearInterval(actionInterval);
-    }
-  }, interval);
-};
+global.io = io;
+global.allPlayers = allPlayers;
 
 // WEBSOCKET SERVER CODE:
 
@@ -146,7 +77,7 @@ io.on("connection", (socket) => {
         champ.id !== player2.id &&
         !champ.isPushed &&
         !player2.isPushed &&
-        doesCollideRect(
+        MAScripts.doesCollideRect(
           champ.getCurrentPushingBox(),
           player2.getCurrentPushingBox(),
           champ.offset.y,
@@ -155,38 +86,38 @@ io.on("connection", (socket) => {
       ) {
         if (champ.isRunning && player2.isRunning) {
           player2.pushMe(champ.lastDirection, 7);
-          champ.pushMe(getOppositeDirection(champ.lastDirection), 7);
+          champ.pushMe(MAScripts.getOppositeDirection(champ.lastDirection), 7);
         } else if (champ.isRunning) {
           player2.pushMe(champ.lastDirection, 7);
-          champ.pushMe(getOppositeDirection(champ.lastDirection), 3);
+          champ.pushMe(MAScripts.getOppositeDirection(champ.lastDirection), 3);
         } else if (player2.isRunning) {
           player2.pushMe(champ.lastDirection, 3);
-          champ.pushMe(getOppositeDirection(champ.lastDirection), 7);
+          champ.pushMe(MAScripts.getOppositeDirection(champ.lastDirection), 7);
         } else if (player2.isWalking && champ.isWalking) {
           player2.pushMe(champ.lastDirection, 1);
-          champ.pushMe(getOppositeDirection(champ.lastDirection), 1);
+          champ.pushMe(MAScripts.getOppositeDirection(champ.lastDirection), 1);
         } else if (champ.isWalking) {
           player2.pushMe(champ.lastDirection, 1);
-          champ.pushMe(getOppositeDirection(champ.lastDirection), 1);
+          champ.pushMe(MAScripts.getOppositeDirection(champ.lastDirection), 1);
         }
       }
     });
 
     if (controlData.champMoving && !champ.isPushed) {
       if (controlData.champDirection === "topLeft") {
-        currentVelocity.y = -basicMovementSpeed * diagonalFactor;
-        currentVelocity.x = -basicMovementSpeed * diagonalFactor;
+        currentVelocity.y = -basicMovementSpeed * MAScripts.getDiagonalFactor();
+        currentVelocity.x = -basicMovementSpeed * MAScripts.getDiagonalFactor();
       } else if (controlData.champDirection === "topRight") {
-        currentVelocity.y = -basicMovementSpeed * diagonalFactor;
-        currentVelocity.x = basicMovementSpeed * diagonalFactor;
+        currentVelocity.y = -basicMovementSpeed * MAScripts.getDiagonalFactor();
+        currentVelocity.x = basicMovementSpeed * MAScripts.getDiagonalFactor();
       } else if (controlData.champDirection === "top") {
         currentVelocity.y = -basicMovementSpeed;
       } else if (controlData.champDirection === "bottomLeft") {
-        currentVelocity.y = basicMovementSpeed * diagonalFactor;
-        currentVelocity.x = -basicMovementSpeed * diagonalFactor;
+        currentVelocity.y = basicMovementSpeed * MAScripts.getDiagonalFactor();
+        currentVelocity.x = -basicMovementSpeed * MAScripts.getDiagonalFactor();
       } else if (controlData.champDirection === "bottomRight") {
-        currentVelocity.y = basicMovementSpeed * diagonalFactor;
-        currentVelocity.x = basicMovementSpeed * diagonalFactor;
+        currentVelocity.y = basicMovementSpeed * MAScripts.getDiagonalFactor();
+        currentVelocity.x = basicMovementSpeed * MAScripts.getDiagonalFactor();
       } else if (controlData.champDirection === "bottom") {
         currentVelocity.y = basicMovementSpeed;
       } else if (controlData.champDirection === "right") {
