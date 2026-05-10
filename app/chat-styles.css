@@ -1,0 +1,27 @@
+html {
+    background-color: rgb(32, 32, 32);
+}
+.blg-chat-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding: 20px;
+}
+.chat-info {
+    color: white;
+}
+.chat-controls {
+    display: none;
+}
+.chat-messages {
+    background-color: rgba(0,0,0,0.2);
+    opacity: 0.6;
+    max-height: 200px;
+    width: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    line-break: anywhere;
+    padding: 10px;
+    font-size: 13px;
+    font-weight: bold;
+}
