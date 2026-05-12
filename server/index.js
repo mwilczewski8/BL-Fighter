@@ -1,11 +1,12 @@
-//-----Imports
-const CharacterModule = require("./Character.js");
-const http = require("http").createServer();
-const io = require("socket.io")(http, {
+import { Character } from "./Character.js";
+import { MovementActionScripts as MAScripts } from "./movementActionScripts.js";
+import { Server } from "socket.io";
+import { createServer } from "http";
+
+const http = createServer();
+const io = new Server(http, {
   cors: { origin: "*" },
 });
-const MAScripts = require("./movementActionScripts.js").MovementActionScripts;
-//-----
 
 const allPlayers = [];
 global.io = io;
@@ -31,7 +32,7 @@ io.on("connection", (socket) => {
 
   socket.on("arenaActionPlayerSpawn", () => {
     const playerIndex = allPlayers.findIndex((e) => e.id === socket.id);
-    const newCharacter = new CharacterModule.Character({
+    const newCharacter = new Character({
       id: socket.id,
       position: {
         x: 100 + Math.floor(Math.random() * 700),
@@ -206,10 +207,8 @@ io.on("connection", (socket) => {
   });
 });
 
-http.listen(8080, () => console.log("listening on http://localhost:8080"));
-
+// Time dependent actions
 const gameInterval = setInterval(() => {
-  // Time dependent actions
   allPlayers.forEach((player) => {
     player.currentEnergy += 15 + player.maxEnergy / 200;
     player.gold += 1;
@@ -223,3 +222,5 @@ const gameInterval = setInterval(() => {
   });
   io.emit("gameActions", allPlayers);
 }, 1000);
+
+http.listen(8080, () => console.log("listening on http://localhost:8080"));
